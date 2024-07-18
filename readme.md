@@ -1,24 +1,8 @@
-# Typescript Boilerplate
+# PromisePlus
 
-This repository serves as a boilerplate for starting new TypeScript projects. It provides a basic project setup and configurations to kickstart development quickly.
+A class that extends the JavaScript `Promise` class with some custom utility method implementations.
 
-## Installation
-
-```bash
-$ pnpm install
-```
-
-## Running the application server
-
-```bash
-# production
-$ pnpm start
-
-# watch mode
-$ pnpm start:dev
-```
-
-## PromisePlus Utility Methods
+## Utility Methods
 
 ### 1. PromisePlus.allShortCircuit()
 
@@ -42,7 +26,7 @@ The `PromisePlus.allShortCircuit()` static method takes an array of promises as 
 
 The `PromisePlus.allShortCircuit()` method is similar to the `Promise.all()` method. But it takes an additional `ShortCircuitDefiner` value as its second parameter. It can be a plain value or a callback function that returns a boolean value.
 
-##### [Short-circuit conditions](#short-circuit-conditions)
+#### [Short-circuit conditions](#short-circuit-conditions)
 
 The `PromisePlus.allShortCircuit()` value resolves early if:
 
@@ -84,13 +68,23 @@ const promise4 = new Promise((resolve, _reject) => {
   }, 5000);
 });
 
+const TIMER_NAME = 'EXECUTION_TIME';
+console.time(TIMER_NAME);
 PromisePlus.allShortCircuit([promise1, promise2, promise3, promise4], true)
-  .then(console.log)
-  .catch(console.error);
+  .then((data) => {
+    console.timeEnd(TIMER_NAME);
+    console.log(data);
+  })
+  .catch((error) => {
+    console.timeEnd(TIMER_NAME);
+    console.error(error);
+  });
 
-// Output:
-// [true]
-
+/*
+Output:
+EXECUTION_TIME: 2.003s
+[true]
+*/
 ```
 
 `PromisePlus.allShortCircuit()` resolves early if the `shortCircuitDefiner` callback function returns a `truthy` value while being executed with the resolved value of any of the promises from the `promises` array
@@ -119,13 +113,24 @@ const promise4 = new Promise<string>((resolve, _reject) => {
   }, 5000);
 });
 
+const TIMER_NAME = 'EXECUTION_TIME';
+console.time(TIMER_NAME);
 PromisePlus.allShortCircuit<string>(
   [promise1, promise2, promise3, promise4],
   (value: string) => value === 'B',
 )
-  .then(console.log)
-  .catch(console.error);
+  .then((data) => {
+    console.timeEnd(TIMER_NAME);
+    console.log(data);
+  })
+  .catch((error) => {
+    console.timeEnd(TIMER_NAME);
+    console.error(error);
+  });
 
-// Output:
-// [true]
+/*
+Output:
+EXECUTION_TIME: 3.003s
+['B']
+*/
 ```
