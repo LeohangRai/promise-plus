@@ -6,6 +6,31 @@ A class that extends the JavaScript `Promise` class with some custom utility met
 
 ### 1. PromisePlus.allShortCircuit()
 
+#### Use Case
+
+Let's say you are required to implement a function `areAdminUserIds()` that takes in an array of user IDs as the input and returns a `Promise` that must resolve with boolean value denoting whether all of the users associated with the provided IDs are admins or not.
+
+For this, you create a helper function `isAdminUserId()` that takes in a single user ID, asynchronously performs queries on the database and returns `Promise` that resolves with a boolean value denoting whether the user associated with the provided ID is an admin. 
+
+For your `areAdminUserIds()` function implementation, you first create an array of promises returned by calling the `isAdminUserId()` function and then process them concurrently.
+
+```JS
+async function isAdminUserId(userId: number): Promise<boolean> {
+  // query the database and return a promise that resolves to a boolean value
+}
+
+async function areAdminUserIds(userIds: number[]): Promise<boolean> {
+  const promisesArr = userIds.map(userId => isAdminUserId(userId));
+  return Promise.all(promisesArr)
+}
+```
+
+You might want to make use of the `Promise.all()` method here. But the problem with that will be the fact that `Promise.all()` waits for all of the promises to resolve no matter what values they get resolved with, unless any of the promises gets rejected early.
+
+Since we are implementing a function that requires all of the promises to resolve with `True`, it would be efficient if we could somehow exit early if any of the promise gets resolved with `False`.
+
+#### Introducing PromisePlus.allShortCircuit()
+
 The `PromisePlus.allShortCircuit()` static method takes an array of promises as input and returns a single `Promise`. The returned promise resolves with an array containing the first fulfilled promise that satisfies the [short-circuit condition](#short-circuit-conditions), or resolves with an array of all the resolved values if the [short-circuit condition](#short-circuit-conditions) is not met by any resolved value. It rejects early with the first promise rejection in case any of the promises rejects.
 
 #### Parameters
