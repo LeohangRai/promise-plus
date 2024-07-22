@@ -28,11 +28,15 @@ For your `areAdminUserIds()` function implementation, you first create an array 
 
 You might want to make use of the `Promise.all()` method here. But the problem with that will be the fact that `Promise.all()` waits for all of the promises to resolve no matter what values they get resolved with, unless any of the promises gets rejected early.
 
-Since we are implementing a function that requires all of the promises to resolve with `True`, it would be efficient if we could somehow resolve early (kind of like exiting early) if any of the promise gets resolved with `False`.
+Since we are implementing a function that requires all of the promises to resolve with `True` in order for itself to resolve with `True`, it would be efficient if we could somehow resolve early (kind of like exiting early) as soon as any of the promises gets resolved with `False`.
 
 #### Introducing PromisePlus.allShortCircuit()
 
-The `PromisePlus.allShortCircuit()` static method takes an array of promises as input and returns a single `Promise`. The returned promise resolves with an array containing the first fulfilled promise that satisfies the [short-circuit condition](#short-circuit-conditions), or resolves with an array of all the resolved values if the [short-circuit condition](#short-circuit-conditions) is not met by any resolved value. It rejects early with the first promise rejection in case any of the promises rejects.
+The `PromisePlus.allShortCircuit()` static method takes an array of promises as input and returns a single `Promise` which:
+
+- resolves with an array of all the resolved values if the [short-circuit condition](#short-circuit-conditions) is not met by any resolved value **_(identical to how the `Promise.all()` method works)_**
+- resolves with an array containing the first fulfilled promise that satisfies the [short-circuit condition](#short-circuit-conditions)
+- rejects early with the first promise rejection in case any of the promises rejects.
 
 #### Parameters
 
@@ -42,11 +46,13 @@ The `PromisePlus.allShortCircuit()` static method takes an array of promises as 
 
 ##### shortCircuitDefiner
 
-- a value or callback that defines the [short-circuit condition](#short-circuit-conditions) (if a callback is passed, it must return a boolean)
+- a value or callback that defines the [short-circuit condition](#short-circuit-conditions) (if a callback is passed, it must return a boolean value)
 
 #### Return value
 
-- a `Promise` that resolves with an array of all the fulfilled values or an array with the first resolved value that satifies the short circuit condition
+- a `Promise` that resolves with either:
+  - an array of all the fulfilled values
+  - an array with the first resolved value that satifies the short circuit condition
 
 #### Description
 
@@ -59,14 +65,15 @@ The `PromisePlus.allShortCircuit()` value resolves early if:
 - any of the values resolved from the `promises` array matches the `shortCircuitDefiner` value
 - the `shortCircuitDefiner` callback function returns a `truthy` value while executing with any of the values resolved from the `promises` array
 
-The cases above can be referred to as the `Short Circuit conditions`.
-If the short-circuit condition is not met, `PromisePlus.allShortCircuit()` behaves just like the `Promise.all()` method. The case for rejection is similar to the `Promise.all()` method as well.
+The cases above can be referred to as the `Short Circuit conditions`. If the short-circuit condition is not met, `PromisePlus.allShortCircuit()` behaves just like the `Promise.all()` method. The case for rejection is similar to the `Promise.all()` method as well.
 
 ##### Things to keep in mind
 
-_It is important to note that the `PromisePlus.allShortCircuit()` does not actually stop the execution of pending promises when the [short-circuit condition](#short-circuit-conditions) is met. It only `resolves` early, just like the `Promise.all()` and `Promise.race()` methods do._
+_It is important to note that the `PromisePlus.allShortCircuit()` method does not actually stop the execution of pending promises when the [short-circuit condition](#short-circuit-conditions) is met. It only `resolves` early, just like the `Promise.all()` and `Promise.race()` methods do._
 
 #### Examples
+
+##### Using a plain value as the `shortCircuitDefiner`
 
 `PromisePlus.allShortCircuit()` resolves early if a value resolved from the `promises` array becomes equal to the `shortCircuitDefiner` value
 
@@ -112,6 +119,8 @@ EXECUTION_TIME: 2.003s
 [true]
 */
 ```
+
+##### Using a callback function as the `shortCircuitDefiner`
 
 `PromisePlus.allShortCircuit()` resolves early if the `shortCircuitDefiner` callback function returns a `truthy` value while being executed with the resolved value of any of the promises from the `promises` array
 
@@ -167,26 +176,10 @@ EXECUTION_TIME: 3.003s
 
 ```JS
 const users = [
-  {
-    id: 1,
-    name: 'Leohang',
-    isAdmin: false,
-  },
-  {
-    id: 2,
-    name: 'Milon',
-    isAdmin: true,
-  },
-  {
-    id: 3,
-    name: 'Shizen',
-    isAdmin: true,
-  },
-  {
-    id: 4,
-    name: 'Pica',
-    isAdmin: false,
-  },
+  { id: 1, name: 'Leohang', isAdmin: false },
+  { id: 2, name: 'Milon', isAdmin: true },
+  { id: 3, name: 'Shizen', isAdmin: true },
+  { id: 4, name: 'Pica', isAdmin: false },
 ];
 
 async function isAdminUserId(userId: number): Promise<boolean> {
@@ -228,26 +221,10 @@ false
 import { PromisePlus } from './promise-plus';
 
 const users = [
-  {
-    id: 1,
-    name: 'Leohang',
-    isAdmin: false,
-  },
-  {
-    id: 2,
-    name: 'Milon',
-    isAdmin: true,
-  },
-  {
-    id: 3,
-    name: 'Shizen',
-    isAdmin: true,
-  },
-  {
-    id: 4,
-    name: 'Pica',
-    isAdmin: false,
-  },
+  { id: 1, name: 'Leohang', isAdmin: false },
+  { id: 2, name: 'Milon', isAdmin: true },
+  { id: 3, name: 'Shizen', isAdmin: true },
+  { id: 4, name: 'Pica', isAdmin: false },
 ];
 
 async function isAdminUserId(userId: number): Promise<boolean> {
