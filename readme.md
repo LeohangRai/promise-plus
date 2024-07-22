@@ -8,11 +8,7 @@ A class that extends the JavaScript `Promise` class with some custom utility met
 
 #### Use Case
 
-Let's say you are required to implement a function `areAdminUserIds()` that takes in an array of user IDs as the input and returns a `Promise` that must resolve with boolean value denoting whether all of the users associated with the provided IDs are admins or not.
-
-For this, you create a helper function `isAdminUserId()` that takes in a single user ID, asynchronously performs queries on the database and returns `Promise` that resolves with a boolean value denoting whether the user associated with the provided ID is an admin. 
-
-For your `areAdminUserIds()` function implementation, you first create an array of promises returned by calling the `isAdminUserId()` function and then process them concurrently.
+Let's say you are required to implement a function `areAdminUserIds()` that takes in an array of user IDs as the input and returns a `Promise` that must resolve with a boolean value denoting whether all of the users associated with the provided IDs are admins or not.
 
 ```JS
 async function isAdminUserId(userId: number): Promise<boolean> {
@@ -20,14 +16,19 @@ async function isAdminUserId(userId: number): Promise<boolean> {
 }
 
 async function areAdminUserIds(userIds: number[]): Promise<boolean> {
-  const promisesArr = userIds.map(userId => isAdminUserId(userId));
-  return Promise.all(promisesArr)
+  const promisesArr = userIds.map((userId) => isAdminUserId(userId));
+  const results = await Promise.all(promisesArr);
+  return results.every((result) => result === true);
 }
 ```
 
+For this, you create a helper function `isAdminUserId()` that takes in a single user ID, asynchronously performs queries on the database and returns a `Promise` that resolves with a boolean value denoting whether the user associated with the provided ID is an admin.
+
+For your `areAdminUserIds()` function implementation, you first create an array of promises returned by calling the `isAdminUserId()` function and then process them concurrently.
+
 You might want to make use of the `Promise.all()` method here. But the problem with that will be the fact that `Promise.all()` waits for all of the promises to resolve no matter what values they get resolved with, unless any of the promises gets rejected early.
 
-Since we are implementing a function that requires all of the promises to resolve with `True`, it would be efficient if we could somehow exit early if any of the promise gets resolved with `False`.
+Since we are implementing a function that requires all of the promises to resolve with `True`, it would be efficient if we could somehow resolve early (kind of like exiting early) if any of the promise gets resolved with `False`.
 
 #### Introducing PromisePlus.allShortCircuit()
 
@@ -157,5 +158,127 @@ PromisePlus.allShortCircuit<string>(
 Output:
 EXECUTION_TIME: 3.003s
 ['B']
+*/
+```
+
+#### Solution for our `areAdminUserIds()` function
+
+##### Using `Promise.all()`:
+
+```JS
+const users = [
+  {
+    id: 1,
+    name: 'Leohang',
+    isAdmin: false,
+  },
+  {
+    id: 2,
+    name: 'Milon',
+    isAdmin: true,
+  },
+  {
+    id: 3,
+    name: 'Shizen',
+    isAdmin: true,
+  },
+  {
+    id: 4,
+    name: 'Pica',
+    isAdmin: false,
+  },
+];
+
+async function isAdminUserId(userId: number): Promise<boolean> {
+  // simulating db query delay
+  await new Promise((resolve) =>
+    setTimeout(resolve, (Number(userId) || 2) * 1000),
+  );
+  return users.find((user) => user.id === userId)?.isAdmin ?? false;
+}
+
+async function areAdminUserIds(userIds: number[]): Promise<boolean> {
+  const promisesArr = userIds.map((userId) => isAdminUserId(userId));
+  const results = await Promise.all(promisesArr);
+  return results.every((result) => result === true);
+}
+
+const TIMER_NAME = 'EXECUTION_TIME';
+console.time(TIMER_NAME);
+areAdminUserIds([1, 2, 3, 4])
+  .then((data) => {
+    console.timeEnd(TIMER_NAME);
+    console.log(data);
+  })
+  .catch((error) => {
+    console.timeEnd(TIMER_NAME);
+    console.log(error);
+  });
+
+/*
+Output:
+EXECUTION_TIME: 4.003s
+false
+*/
+```
+
+##### Using `PromisePlus.allShortCircuit()`:
+
+```JS
+import { PromisePlus } from './promise-plus';
+
+const users = [
+  {
+    id: 1,
+    name: 'Leohang',
+    isAdmin: false,
+  },
+  {
+    id: 2,
+    name: 'Milon',
+    isAdmin: true,
+  },
+  {
+    id: 3,
+    name: 'Shizen',
+    isAdmin: true,
+  },
+  {
+    id: 4,
+    name: 'Pica',
+    isAdmin: false,
+  },
+];
+
+async function isAdminUserId(userId: number): Promise<boolean> {
+  // simulating db query delay
+  await new Promise((resolve) =>
+    setTimeout(resolve, (Number(userId) || 2) * 1000),
+  );
+  return users.find((user) => user.id === userId)?.isAdmin ?? false;
+}
+
+async function areAdminUserIds(userIds: number[]): Promise<boolean> {
+  const promisesArr = userIds.map((userId) => isAdminUserId(userId));
+  const results = await PromisePlus.allShortCircuit(promisesArr, false);
+  return results.every((result) => result === true);
+}
+
+const TIMER_NAME = 'EXECUTION_TIME';
+console.time(TIMER_NAME);
+areAdminUserIds([1, 2, 3, 4])
+  .then((data) => {
+    console.timeEnd(TIMER_NAME);
+    console.log(data);
+  })
+  .catch((error) => {
+    console.timeEnd(TIMER_NAME);
+    console.log(error);
+  });
+
+/*
+Output:
+EXECUTION_TIME: 1.004s
+false
 */
 ```
